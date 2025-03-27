@@ -1,6 +1,5 @@
 import {
   AdjustmentsHorizontalIcon,
-  ArrowPathIcon,
   QueueListIcon,
   TrashIcon
 } from "@heroicons/react/24/outline"
@@ -93,21 +92,12 @@ export const TabGroupList = () => {
 
   // 计算要显示的分组
   const displayGroups = groups
-  const hasGroups = groups.length > 0
 
   return (
     <div className="p-4 min-w-[350px]">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">当前标签组</h2>
         <div className="flex space-x-2">
-          <button
-            onClick={fetchGroups}
-            className="p-1.5 rounded-md hover:bg-gray-100"
-            title="刷新">
-            <ArrowPathIcon
-              className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
-            />
-          </button>
           <button
             onClick={navigateToOptions}
             className="p-1.5 rounded-md hover:bg-gray-100"

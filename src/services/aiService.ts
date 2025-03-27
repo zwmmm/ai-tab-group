@@ -169,6 +169,7 @@ export const generateTabGroups = async (
     // 获取用户设置
     const data = await browser.storage.local.get("settings")
     const settings = data.settings as { aiEnabled?: boolean } | undefined
+    console.log("🚀 ~ settings:", settings)
     const aiEnabled = settings?.aiEnabled !== false // 默认启用AI
 
     // 1. 首先尝试基于规则分组

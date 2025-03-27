@@ -93,26 +93,25 @@ export const Options = () => {
   }, [])
 
   // 保存设置到存储
-  const saveSettings = async () => {
+  const saveSettings = async (settings: UserSettings) => {
+    setSettings(settings)
     await browser.storage.local.set({ settings })
+    console.log("🚀 ~ saveSettings ~ settings:", settings)
   }
 
   // 更新自动分组设置
   const handleAutoGroupToggle = (enabled: boolean) => {
-    setSettings({ ...settings, autoGroupEnabled: enabled })
-    saveSettings()
+    saveSettings({ ...settings, autoGroupEnabled: enabled })
   }
 
   // 更新 AI 设置
   const handleAiToggle = (enabled: boolean) => {
-    setSettings({ ...settings, aiEnabled: enabled })
-    saveSettings()
+    saveSettings({ ...settings, aiEnabled: enabled })
   }
 
   // 更新 AI 分组间隔
   const handleIntervalChange = (interval: number) => {
-    setSettings({ ...settings, aiGroupingInterval: interval })
-    saveSettings()
+    saveSettings({ ...settings, aiGroupingInterval: interval })
   }
 
   // 更新 AI 提供商配置
@@ -120,14 +119,13 @@ export const Options = () => {
     field: keyof AIProviderConfig,
     value: string
   ) => {
-    setSettings({
+    saveSettings({
       ...settings,
       aiProvider: {
         ...settings.aiProvider,
         [field]: value
       }
     })
-    saveSettings()
   }
 
   // 处理模型选择变化
@@ -156,8 +154,7 @@ export const Options = () => {
 
   // 更新自动重新分组设置
   const handleAutoRescheduleToggle = (enabled: boolean) => {
-    setSettings({ ...settings, autoReschedule: enabled })
-    saveSettings()
+    saveSettings({ ...settings, autoReschedule: enabled })
   }
 
   return (

@@ -32,7 +32,7 @@ const initDefaultRules = async () => {
           type: "domain",
           pattern: "facebook.com,twitter.com,instagram.com,weibo.com",
           enabled: true,
-          color: "#4285F4" // 蓝色
+          color: "blue" // 蓝色
         },
         {
           id: "default-search",
@@ -40,7 +40,7 @@ const initDefaultRules = async () => {
           type: "domain",
           pattern: "google.com,bing.com,baidu.com",
           enabled: true,
-          color: "#34A853" // 绿色
+          color: "green" // 绿色
         },
         {
           id: "default-localhost",
@@ -48,33 +48,10 @@ const initDefaultRules = async () => {
           type: "domain",
           pattern: "localhost,127.0.0.1",
           enabled: true,
-          color: "#A142F4" // 紫色
+          color: "purple" // 紫色
         }
       ]
     })
-  } else {
-    // 将旧版颜色名称更新为十六进制值
-    const updatedRules = rules.map((rule) => {
-      if (rule.color && !rule.color.startsWith("#")) {
-        const colorMap: Record<string, string> = {
-          blue: "#4285F4",
-          red: "#EA4335",
-          green: "#34A853",
-          yellow: "#FBBC05",
-          purple: "#A142F4",
-          cyan: "#24C1E0",
-          orange: "#FA7B17",
-          pink: "#F06292",
-          grey: "#9AA0A6"
-        }
-        return { ...rule, color: colorMap[rule.color] || "#4285F4" }
-      }
-      return rule
-    })
-
-    if (JSON.stringify(rules) !== JSON.stringify(updatedRules)) {
-      await browser.storage.local.set({ rules: updatedRules })
-    }
   }
 
   // 初始化默认设置
@@ -310,25 +287,6 @@ browser.runtime.onMessage.addListener(async (message) => {
     return await regroupAllTabs()
   }
 })
-
-// 将十六进制颜色转换为Chrome标签组颜色枚举
-const hexToColorEnum = (hex: string): browser.TabGroups.ColorEnum => {
-  // 默认颜色映射
-  const colorMap: Record<string, browser.TabGroups.ColorEnum> = {
-    "#4285F4": "blue",
-    "#EA4335": "red",
-    "#34A853": "green",
-    "#FBBC05": "yellow",
-    "#A142F4": "purple",
-    "#24C1E0": "cyan",
-    "#FA7B17": "orange",
-    "#F06292": "pink",
-    "#9AA0A6": "grey"
-  }
-
-  // 使用映射表查找，如果没有找到则默认使用蓝色
-  return colorMap[hex] || "blue"
-}
 
 // 删除所有标签分组
 const deleteAllGroups = async () => {

@@ -17,7 +17,7 @@ export const GroupRuleList = () => {
     type: "domain",
     pattern: "",
     enabled: true,
-    color: "#4285F4" // 默认蓝色，使用十六进制颜色值
+    color: "blue" // 默认蓝色，使用十六进制颜色值
   })
 
   // 跟踪正在编辑的规则
@@ -31,26 +31,7 @@ export const GroupRuleList = () => {
     const fetchRules = async () => {
       const savedRules = await getRules()
       if (savedRules.length > 0) {
-        // 转换旧的颜色名称为十六进制值
-        const updatedRules = savedRules.map((rule) => {
-          // 如果颜色是旧式名称（例如"blue"）则转换为十六进制值
-          if (rule.color && !rule.color.startsWith("#")) {
-            const chromeColorMap: Record<string, string> = {
-              blue: "#4285F4",
-              red: "#EA4335",
-              green: "#34A853",
-              yellow: "#FBBC05",
-              purple: "#A142F4",
-              cyan: "#24C1E0",
-              orange: "#FA7B17",
-              pink: "#F06292",
-              grey: "#9AA0A6"
-            }
-            return { ...rule, color: chromeColorMap[rule.color] || "#4285F4" }
-          }
-          return rule
-        })
-        setRules(updatedRules)
+        setRules(savedRules)
       }
     }
 
@@ -88,7 +69,7 @@ export const GroupRuleList = () => {
       type: "domain",
       pattern: "",
       enabled: true,
-      color: "#4285F4"
+      color: "blue"
     })
   }
 
