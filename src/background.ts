@@ -1,5 +1,7 @@
 import browser from "webextension-polyfill"
 
+import { debounce } from "~node_modules/es-toolkit/dist"
+
 import { generateTabGroups } from "./services/aiService"
 import { getRules } from "./services/tabService"
 import type { TabGroup, UserSettings } from "./types"
@@ -142,7 +144,7 @@ const handleTabUpdated = async (
 }
 
 // 将新标签尝试加入现有分组或创建新分组
-const groupNewTab = async (tab: browser.Tabs.Tab) => {
+const groupNewTab = debounce(async (tab: browser.Tabs.Tab) => {
   // 检查标签是否已经在分组中
   if (tab.groupId !== undefined && tab.groupId !== -1) {
     console.log("标签已在分组中，跳过:", tab.id, tab.groupId)
@@ -151,14 +153,18 @@ const groupNewTab = async (tab: browser.Tabs.Tab) => {
 
   try {
     // 首先尝试根据规则匹配已有分组
-
+    const tabs = await browser.tabs.query({})
+    const newTabs = tabs.filter((t) => t.groupId === -1)
+    console.log("🚀 ~ 有新的标签页加入:", newTabs)
+    const tabGroups = await generateTabGroups(newTabs)
+    await applyAiGroups(tabGroups)
     // 如果上面的所有尝试都失败，则不对标签进行分组
     console.log(`标签 ${tab.id} 不符合任何分组条件，保持未分组状态`)
   } catch (error) {
     console.error("分组新标签失败:", error)
     throw error // 向上传递错误
   }
-}
+}, 200)
 
 // 使用AI分组标签页并应用
 const applyAiGroups = async (aiGroups: TabGroup[]) => {
@@ -166,21 +172,36 @@ const applyAiGroups = async (aiGroups: TabGroup[]) => {
   if (!aiGroups || aiGroups.length === 0) return
 
   try {
+    // 获取所有现有分组
+    const existingGroups = await browser.tabGroups.query({})
+
     // 为每个AI建议的组创建标签组
     for (const group of aiGroups) {
-      // 创建一个新的标签组
-      const tabIds = group.tabs.map((tab) => tab.id)
+      // 检查是否已存在同名分组
+      const existingGroup = existingGroups.find(
+        (g) => g.title === group.name && g.color === group.color
+      )
 
-      // 正确的API是chrome.tabs.group而不是browser.tabGroups.create
-      const groupId = await browser.tabs.group({ tabIds })
-
-      // 然后更新组的标题和颜色
-      await browser.tabGroups.update(groupId, {
-        title: group.name,
-        color: group.color as browser.TabGroups.ColorEnum
-      })
-
-      console.log(`已创建AI标签组: ${group.name}, 包含${tabIds.length}个标签页`)
+      if (existingGroup) {
+        // 如果分组已存在，将标签添加到现有分组
+        const tabIds = group.tabs.map((tab) => tab.id)
+        await browser.tabs.group({
+          groupId: existingGroup.id,
+          tabIds
+        })
+        console.log(`将标签添加到现有分组: ${group.name}`)
+      } else {
+        // 如果分组不存在，创建新分组
+        const tabIds = group.tabs.map((tab) => tab.id)
+        const groupId = await browser.tabs.group({ tabIds })
+        await browser.tabGroups.update(groupId, {
+          title: group.name,
+          color: group.color as browser.TabGroups.ColorEnum
+        })
+        console.log(
+          `已创建AI标签组: ${group.name}, 包含${tabIds.length}个标签页`
+        )
+      }
     }
   } catch (error) {
     console.error("应用AI标签组失败:", error)

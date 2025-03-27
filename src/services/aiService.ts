@@ -1,7 +1,7 @@
 import browser from "webextension-polyfill"
 
 import type { AIProviderConfig, TabGroup, UserSettings } from "../types"
-import { getAllTabs, getRules } from "./tabService"
+import { getRules } from "./tabService"
 
 // 获取当前AI配置
 const getAIConfig = async (): Promise<AIProviderConfig> => {
@@ -161,7 +161,7 @@ export const generateTabGroups = async (
 ): Promise<TabGroup[]> => {
   try {
     console.log("生成标签分组建议")
-    const tabs = inputTabs || (await getAllTabs())
+    const tabs = inputTabs || []
     console.log("🚀 ~ tabs:", tabs)
     const groups: TabGroup[] = []
     let remainingTabs = [...tabs] // 创建一个副本用于跟踪未分组的标签
