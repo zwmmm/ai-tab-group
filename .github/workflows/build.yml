@@ -34,12 +34,43 @@ jobs:
       - name: Package extension
         run: |
           cd build/chrome-mv3-prod
-          zip -r ../ai-tab-group.zip *
+          zip -r ../../ai-tab-group.zip *
 
       # 提取版本号
       - name: Get version
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      # 获取commit信息
+      - name: Get commit message
+        id: get_commit_message
+        run: |
+          # 获取与标签关联的提交信息
+          COMMIT_MSG=$(git log -1 --pretty=format:%s ${GITHUB_REF#refs/tags/})
+          # 将提交信息转换为GitHub Actions可用的格式（处理多行）
+          echo "message<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # 获取当前标签名
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+
+          # 查找上一个标签
+          PREV_TAG=$(git describe --tags --abbrev=0 $CURRENT_TAG^ 2>/dev/null || echo "")
+
+          # 如果找到了上一个标签，则获取从上一个标签到当前标签之间的所有提交
+          if [ -n "$PREV_TAG" ]; then
+            echo "找到上一个标签: $PREV_TAG，获取 $PREV_TAG..$CURRENT_TAG 之间的提交"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..$CURRENT_TAG --no-merges)
+          else
+            # 如果没有找到上一个标签，则获取所有提交
+            echo "没有找到上一个标签，获取所有提交"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" $CURRENT_TAG --no-merges)
+          fi
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       # 创建 GitHub Release
       - name: Create Release
@@ -55,8 +86,11 @@ jobs:
           body: |
             AI Tab Group 浏览器扩展 ${{ steps.get_version.outputs.VERSION }} 版本发布
 
-            ### 更新内容
-            - 请在此处添加版本更新内容
+            ### 发布说明
+            ${{ steps.get_commit_message.outputs.message }}
+
+            ### 最近更新
+            ${{ steps.get_commit_message.outputs.changelog }}
 
       # 上传扩展文件到 Release
       - name: Upload Release Asset
