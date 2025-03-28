@@ -1,6 +1,5 @@
+import { debounce } from "es-toolkit"
 import browser from "webextension-polyfill"
-
-import { debounce } from "~node_modules/es-toolkit/dist"
 
 import { generateTabGroups } from "./services/aiService"
 import { getRules } from "./services/tabService"
