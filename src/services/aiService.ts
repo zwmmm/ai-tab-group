@@ -21,6 +21,48 @@ const getAIConfig = async (): Promise<AIProviderConfig> => {
   return settings.aiProvider
 }
 
+// 检查AI API连接是否正常
+export const checkAiApiConnection = async (): Promise<{
+  success: boolean
+  message: string
+}> => {
+  try {
+    const aiConfig = await getAIConfig()
+
+    // 如果没有设置API密钥，则直接返回失败
+    if (!aiConfig.apiKey) {
+      return { success: false, message: "未设置API密钥" }
+    }
+
+    // 发送简单请求以验证API连接
+    const response = await fetch(`${aiConfig.endpoint}/v1/models`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${aiConfig.apiKey}`
+      }
+    })
+
+    const data = await response.json()
+
+    // 检查响应
+    if (!response.ok) {
+      return {
+        success: false,
+        message:
+          data.error?.message || `连接失败: HTTP状态码 ${response.status}`
+      }
+    }
+
+    return { success: true, message: "API连接正常" }
+  } catch (error) {
+    console.error("检查AI API连接失败:", error)
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误"
+    }
+  }
+}
+
 // 调用AI服务进行标签页分组
 export const callAiApi = async (
   tabs: browser.Tabs.Tab[],
@@ -40,6 +82,13 @@ export const callAiApi = async (
     if (!aiConfig.apiKey || (!settings?.aiEnabled && !forceAI)) {
       console.warn("AI未启用或未设置API密钥，跳过AI分组")
       return []
+    }
+
+    // 在发送实际请求前，检查API连接是否正常
+    const connectionCheck = await checkAiApiConnection()
+    if (!connectionCheck.success) {
+      console.error("AI API连接检查失败:", connectionCheck.message)
+      throw new Error(`AI API连接失败: ${connectionCheck.message}`)
     }
 
     // 默认系统提示语

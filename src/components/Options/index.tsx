@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import browser from "webextension-polyfill"
 
+import { checkAiApiConnection } from "../../services/aiService"
 import type { AIProviderConfig, UserSettings } from "../../types"
 import { GroupRuleList } from "./GroupRuleList"
 
@@ -43,6 +44,15 @@ export const Options = () => {
     show: false,
     title: "",
     message: ""
+  })
+
+  // 添加测试 API 连接的状态
+  const [apiTestStatus, setApiTestStatus] = useState<{
+    loading: boolean
+    result: null | { success: boolean; message: string }
+  }>({
+    loading: false,
+    result: null
   })
 
   // 监听错误消息
@@ -155,6 +165,42 @@ export const Options = () => {
   // 更新自动重新分组设置
   const handleAutoRescheduleToggle = (enabled: boolean) => {
     saveSettings({ ...settings, autoReschedule: enabled })
+  }
+
+  // 测试 API 连接
+  const handleTestApiConnection = async () => {
+    try {
+      setApiTestStatus({ loading: true, result: null })
+      // 先保存当前设置以确保使用最新的配置
+      await browser.storage.local.set({ settings })
+
+      // 调用测试函数
+      const result = await checkAiApiConnection()
+      setApiTestStatus({ loading: false, result })
+
+      // 如果测试失败，显示错误提示
+      if (!result.success) {
+        setErrorState({
+          show: true,
+          title: "API 连接测试失败",
+          message: result.message
+        })
+      }
+    } catch (error) {
+      setApiTestStatus({
+        loading: false,
+        result: {
+          success: false,
+          message: error instanceof Error ? error.message : "未知错误"
+        }
+      })
+
+      setErrorState({
+        show: true,
+        title: "API 连接测试出错",
+        message: error instanceof Error ? error.message : "未知错误"
+      })
+    }
   }
 
   return (
@@ -282,9 +328,35 @@ export const Options = () => {
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 placeholder="sk-..."
               />
-              <p className="text-xs text-gray-500 mt-1">
-                输入 API 密钥，密钥仅保存在本地
-              </p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-xs text-gray-500">
+                  输入 API 密钥，密钥仅保存在本地
+                </p>
+                <button
+                  onClick={handleTestApiConnection}
+                  disabled={
+                    apiTestStatus.loading || !settings.aiProvider.apiKey
+                  }
+                  className={`px-3 py-1 text-xs rounded-md ${
+                    apiTestStatus.loading
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : apiTestStatus.result?.success
+                        ? "bg-green-500 text-white"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                  }`}>
+                  {apiTestStatus.loading
+                    ? "测试中..."
+                    : apiTestStatus.result?.success
+                      ? "连接正常"
+                      : "测试连接"}
+                </button>
+              </div>
+              {apiTestStatus.result && (
+                <p
+                  className={`text-xs mt-1 ${apiTestStatus.result.success ? "text-green-600" : "text-red-600"}`}>
+                  {apiTestStatus.result.message}
+                </p>
+              )}
             </div>
 
             <div>
