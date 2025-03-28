@@ -27,6 +27,8 @@ jobs:
           cache: "pnpm"
       - name: Build the extension
         run: pnpm build
+        env:
+          PARCEL_WORKER_BACKEND: process
 
       # 打包扩展文件
       - name: Package extension
