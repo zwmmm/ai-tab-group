@@ -1,4 +1,4 @@
-import { debounce } from "es-toolkit"
+import { debounce } from "es-toolkit/function"
 import browser from "webextension-polyfill"
 
 import { generateTabGroups } from "./services/aiService"
